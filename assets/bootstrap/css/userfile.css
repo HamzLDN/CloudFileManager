@@ -1,0 +1,131 @@
+body {
+    background-color: #218838;
+}
+main {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #231e1e;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+input[type="file"] {
+    margin-bottom: 10px;
+}
+
+button {
+    background-color: #A9A9A9;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+button:hover {
+    background-color: #218838;
+}
+
+#fileList {
+    list-style: none;
+    padding: 0;
+}
+.file-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.file-table th,
+
+.file-table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: left;
+}
+
+.file-table th {
+    background-color: #f2f2f2;
+}
+
+.file-table tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+.content-textarea {
+    font-size: 20px;
+    border: 4px solid #141212;
+    font-family: Cambria, sans-serif;
+    color: #211f19;
+    white-space: pre-wrap;
+    width: 100%;
+    padding: 10px;
+}
+
+.header-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+
+.header-table th {
+    border: 2px solid #141212;
+    padding: 8px;
+}
+
+
+.userinfo {
+    position: absolute;
+    top: 7%;
+    right: 10%;
+    width: 10%;
+    height: 20px;
+    transform: translate(0, -50%);
+}
+textarea {
+    width: 90%;
+    padding: 100px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;  
+    height: 50vh;
+    color: white;
+}
+
+#fileInput {
+    position: absolute;
+    clip: rect(0, 0, 0, 0);
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+}
+.file-upload {
+    text-align: center;
+    margin: 20px;
+}
+
+#uploadButton {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #444ff2;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#uploadButton:hover {
+    background-color: #45a049;
+}

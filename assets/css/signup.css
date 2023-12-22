@@ -1,0 +1,17 @@
+/* Add this CSS in a style tag or in an external stylesheet */
+
+#statusContainer {
+    width: 300px;
+    padding: 10px;
+    margin: 20px auto;
+    text-align: center;
+    border-radius: 5px;
+}
+
+.success {
+    background-color: rgba(0, 255, 0, 0.3); /* Transparent green */
+}
+
+.failed {
+    background-color: rgba(255, 0, 0, 0.3); /* Transparent red */
+}

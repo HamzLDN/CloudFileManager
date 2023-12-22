@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <link rel="stylesheet" href="/assets/bootstrap/css/userfile.css">
+    <link rel="stylesheet" href="/assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/fonts/font-awesome.min.css">
+    <link rel="stylesheet" href="/assets/css/Dark-NavBar-Navigation-with-Button.css">
+    <title>BlueCloud</title>
+</head>
+<body style="background: linear-gradient(black, var(--bs-blue) 60%, white);width: 100%;height: 100vh;transform: scale(1) skew(0deg);opacity: 1;">
+    <div style="opacity: 1;">
+        <nav class="navbar navbar-dark navbar-expand-md bg-dark navigation-clean-button" style="border-color: var(--bs-navbar-disabled-color);background: rgba(33,37,41,0.24);opacity: 1;filter: contrast(124%);backdrop-filter: opacity(1);-webkit-backdrop-filter: opacity(1);">
+            <div class="container">
+                <div><a class="navbar-brand link-light" href="#">BlueCloud</a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button></div>
+                <div class="collapse navbar-collapse text-center d-md-flex" id="navcol-1">
+                    <ul class="navbar-nav text-center d-md-flex ms-auto" style="padding-right: 0px;margin-right: 0px;">
+                        <li class="nav-item"><a class="nav-link active" data-bss-disabled-mobile="true" data-bss-hover-animate="pulse" href="#">Projects</a></li>
+                        <li class="nav-item"><a class="nav-link link-light" data-bss-disabled-mobile="true" data-bss-hover-animate="pulse" href="#">Socials</a></li>
+                        <li class="nav-item"><a class="nav-link link-light" data-bss-disabled-mobile="true" data-bss-hover-animate="pulse" href="#">Contact Us</a></li>
+                    </ul>
+                    <p class="ms-auto navbar-text actions" style="margin-bottom: 7px;float: right;display: block;"><a class="link-light login" href=".{{place1-link}}" id=".{{status}}">.{{place1}}&nbsp;</a> 
+                    <a class="btn btn-light action-button" role="button" href=".{{place2-link}}">.{{place2}}</a></p>
+                </div>
+            </div>
+        </nav>
+    </div>
+    <header>
+        
+        <main id="main-file" value="hey">
+            <input type="file" id="fileInput" />
+            <h4 id="filepath"></h4>
+            
+            <ul id="fileList" value=".{{perms}}">
+            </ul>
+        </main>
+    </header>
+
+
+
+    <script src="/assets/bootstrap/js/bootstrap.min.js"></script>
+    <script async src="/assets/bootstrap/js/userfile.js"></script>
+</body>
+</html>
