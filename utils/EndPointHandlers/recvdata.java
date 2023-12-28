@@ -26,7 +26,7 @@ public class recvdata implements HttpHandler {
                 .toArray(String[]::new);
         parts[0] = "UserFiles";
         String filepath = String.join("/", parts);
-                List<String> user;
+        List<String> user;
         String username;
         try {
             username = parts[1];

@@ -13,15 +13,18 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.ArrayList;
+import java.util.Arrays;
 public class UtilityClass {
     
     public static String readFile(String filePath) throws IOException {
         byte[] encoded = Files.readAllBytes(Paths.get(filePath));
         return new String(encoded);
     }
+
     public static List<String> getuserinfo(HttpExchange exchange, Database database) {
         String sessionID = UtilityClass.getSessionIDCookieValue(exchange, "SessionID");
         List<String> resultList = new ArrayList<>();
@@ -41,13 +44,13 @@ public class UtilityClass {
                 resultList.add(sessionId);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            return null;
         }
         return resultList;
         
     }
 
-    public static String hashPassword(String password) { // using sha-512
+    public static String hashPassword(String password) { // using sha-512 to hash the password
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-512");
             byte[] hashedBytes = md.digest(password.getBytes());
@@ -98,6 +101,12 @@ public class UtilityClass {
         return matcher.matches();
     }
 
+    // Send http reponse
+    // public void send_response(String request, int status_code, javax.xml.ws.spi.http.HttpExchange exchange) {
+
+    //     exchange.getResponseHeaders().set("Location", "/")
+    // }
+    // HandleUser compares both local sessionID and the useragent to see if its the corresponding device
     private static boolean HandleUser(HttpExchange exchange, String sessionID, String sessionIDFromSessions, String DBuserAgent, String DeviceUserAgent) throws IOException {
         if (sessionID.equals("")&&sessionIDFromSessions.equals("")) {
             exchange.getResponseHeaders().add("Set-Cookie", "SessionID=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
@@ -143,6 +152,33 @@ public class UtilityClass {
         return htmlContent;
     }
 
+    public static String sanitizeFilePath(String userFilePath) {
+        Path path = Paths.get(userFilePath);
+        Path sanitizedPath = path.normalize();
+        return sanitizedPath.toString();
+    }
+
+    public static String sanitizepath(String filepath) {
+        String[] parts = Arrays.stream(filepath.split("/"))
+                .filter(s -> !s.isEmpty())
+                .toArray(String[]::new);
+        int position = 0;
+        for (String a: parts) {
+            if (a.equals("..")) {
+                if (position!=0) position--;
+                continue;
+            } else {
+                parts[position] = a;
+            }
+            position++;
+        }
+        String[] newpath = new String[position];
+        for (int i=0;i<position;i++) {
+            newpath[i]=parts[i];
+        }
+        return String.join("/", newpath);
+    }
+
     public static boolean handlesession(HttpExchange exchange, Database database) {
         try {
             String sessionID = UtilityClass.getSessionIDCookieValue(exchange, "SessionID");
@@ -152,7 +188,6 @@ public class UtilityClass {
             String DBuserAgent = "";
             String sql = "select * from sessions where session_id = ?";
             ResultSet resultSet = database.executeQuery(sql, sessionID);
-
             while (resultSet.next()) {
                 sessionIDFromSessions = resultSet.getString("session_id");
                 DBuserAgent = resultSet.getString("user_agent");

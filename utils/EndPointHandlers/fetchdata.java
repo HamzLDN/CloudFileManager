@@ -22,8 +22,8 @@ import org.owasp.encoder.Encode;
 import java.nio.file.DirectoryStream;
 import java.util.stream.StreamSupport;
 import java.util.Base64;
-
-
+import java.util.zip.Deflater;
+import java.io.ByteArrayOutputStream;
 public class fetchdata implements HttpHandler {
     private final Database database;
 
@@ -52,6 +52,45 @@ public class fetchdata implements HttpHandler {
         }
         return true;
     }
+
+    public static String extractFileExtension(String filePath) {
+        // Create a Path instance from the file path string
+        Path path = Paths.get(filePath);
+
+        // Get the file name from the path
+        String fileName = path.getFileName().toString();
+
+        // Find the last index of the dot (.) in the file name
+        int dotIndex = fileName.lastIndexOf('.');
+
+        if (dotIndex != -1 && dotIndex < fileName.length() - 1) {
+            // Extract the file extension (substring after the last dot)
+            return fileName.substring(dotIndex + 1).toLowerCase();
+        } else {
+            // Return an empty string if no file extension is found
+            return "";
+        }
+    }
+
+    public static byte[] compressBytes(byte[] inputBytes) throws IOException {
+        Deflater deflater = new Deflater();
+        deflater.setInput(inputBytes);
+        deflater.finish();
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(inputBytes.length);
+
+        byte[] buffer = new byte[1024];
+        while (!deflater.finished()) {
+            int count = deflater.deflate(buffer);
+            outputStream.write(buffer, 0, count);
+        }
+
+        deflater.end();
+        outputStream.close();
+
+        return outputStream.toByteArray();
+    }
+
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         URI uri = exchange.getRequestURI();
@@ -66,30 +105,33 @@ public class fetchdata implements HttpHandler {
         parts[0] = "UserFiles";
         String username = parts[1];
         String filepath =  String.join("/", parts);
+        parts[0] = "";
+        String userpath = String.join("/", parts);
         List<String> fileList = null;
         String fileListJson = null;
         if (!verifyuser(exchange,database,username)){
             exchange.close();
+            return;
         }
         if (navigateuser(exchange, filepath).equals("dir")) {
+            System.out.println(filepath);
             fileList = listFilesAndDirectories(filepath);
             if (fileList.size() == 0) {
                 fileListJson = send_json("error", "");
             } else {
-                fileListJson = convertListToJson(fileList);
+                fileListJson = convertListToJson(fileList, userpath);
             }
             
         } else if (navigateuser(exchange, filepath).equals("file")) {
             String filecontent;
-            if (filepath.endsWith(".png")) {
+            String ext = extractFileExtension(filepath);
+            if (ext.endsWith("png") || ext.endsWith("jpg") || ext.endsWith("jpeg") || ext.endsWith("gif") || ext.endsWith("mov")) {
                 byte[] contentbytes = Files.readAllBytes(Paths.get(filepath));
                 filecontent = encodeToBase64(contentbytes);
             } else {
                 filecontent = new String(Files.readAllBytes(Paths.get(filepath)), StandardCharsets.UTF_8);
             }
-            System.out.println("Encoding");
-            byte[] data = send_json("content", Encode.forHtml(filecontent)).getBytes();
-            
+            byte[] data = send_json("content", filecontent).getBytes();
             exchange.getResponseHeaders().set("Content-Type", "application/json");
             exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*"); // Enable CORS
             try (OutputStream os = exchange.getResponseBody()) {
@@ -140,7 +182,8 @@ public class fetchdata implements HttpHandler {
         return jsonArray.toJSONString();
     }
 
-    public static String convertListToJson(List<String> list) {
+    public static String convertListToJson(List<String> list, String user) {
+        System.out.println(user);
         JSONArray jsonArray = new JSONArray();
         for (String item : list) {
             JSONObject jsonObject = new JSONObject();

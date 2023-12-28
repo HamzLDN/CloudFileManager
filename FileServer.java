@@ -76,6 +76,7 @@ public class FileServer {
             server.createContext("/fetchdata", new fetchdata(databaseManager));
             server.createContext("/upload", new upload(databaseManager));
             server.createContext("/recvdata", new recvdata(databaseManager));
+            server.createContext("/deletecontent", new DeleteContent(databaseManager));
             server.createContext("/logout", new Logout(databaseManager));
             CompletableFuture.runAsync(() -> {
                 server.setExecutor(null);
