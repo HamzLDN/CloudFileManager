@@ -39,25 +39,39 @@ public class DeleteContent implements HttpHandler {
         
         String username = parts[1];
         System.out.println("delete from -> " + username);
+        int removefile = remove_file(exchange, username, parts, userinfo);
+        if (removefile == 1) {
+            String response = "Successfully deleted file";
+            send_outputstream(exchange, response);
+        } else if (removefile == 0){
+            String response = "Failed to delete file";
+            send_outputstream(exchange, response);
+        } else if (removefile == 2) {
+            String response = "User information do not match";
+            send_outputstream(exchange, response);
+        }
+        exchange.close();
+    }
+    private static int remove_file(HttpExchange exchange, String username, String[] parts, List<String> userinfo) throws IOException {
+        // 1 is true, 0 is false, 2 is error matching user
         if (username.equals(userinfo.get(0))) {
             String filepath = String.join("/", parts);
             Path directory = Paths.get(filepath);
             System.out.println("delete -> " + filepath);
             if (validatePath(filepath)) {
                 Files.delete(directory);
-
-                String response = "Successfully deleted file";
-                exchange.sendResponseHeaders(200, response.length());
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(response.getBytes());
-                }
+                return 1;
             } else {
-                String response = "Failed to delete file";
-                exchange.sendResponseHeaders(200, response.length());
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(response.getBytes());
-                }
+                return 0;
             }
+        }
+        return 2;
+    }
+    private static void send_outputstream(HttpExchange exchange, String response) throws IOException {
+        exchange.sendResponseHeaders(200, response.length());
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(response.getBytes());
+            os.close();
         }
     }
     public static boolean validatePath(String filePathString) {
@@ -75,7 +89,6 @@ public class DeleteContent implements HttpHandler {
                 return false; // File path does not exist
             }
         } catch (Exception e) {
-            // Handle exceptions, e.g., security exceptions
             return false; // An error occurred while validating the file path
         }
     }

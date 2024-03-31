@@ -16,8 +16,8 @@ public class Logout implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         // Uncomment the following line to set a cookie to invalidate the session
-        exchange.getResponseHeaders().add("Set-Cookie", "SessionID=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
-
+        exchange.getResponseHeaders().add("Set-Cookie", "SessionID=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT;");
+        exchange.getResponseHeaders().add("Set-Cookie", "KeyHash=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT;");
         String sessionID = UtilityClass.getSessionIDCookieValue(exchange, "SessionID");
 
         try (java.sql.ResultSet db = database.executeQuery("delete from sessions WHERE session_id = ?", sessionID)) {

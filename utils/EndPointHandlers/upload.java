@@ -1,19 +1,19 @@
 package utils.EndPointHandlers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import java.io.IOException;
-import java.io.OutputStream;
+
 import utils.Database;
 import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import utils.UtilityClass;
+import utils.ExpiredSessions.debug;
+
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.charset.StandardCharsets;
 public class upload implements HttpHandler {
@@ -33,19 +33,22 @@ public class upload implements HttpHandler {
             try (InputStream is = exchange.getRequestBody()) {
                 receivedData = is.readAllBytes();
             }
-            System.out.println(new String(receivedData, StandardCharsets.UTF_8));
+            // System.out.println(new String(receivedData, StandardCharsets.UTF_8));
+            System.out.println("User has uploaded a content with :" + receivedData.length);
             boolean valid_path = extractFilename(receivedData, username);
             if (valid_path) {
                 String response = "Data received successfully!";
                 exchange.sendResponseHeaders(200, response.length());
                 try (OutputStream os = exchange.getResponseBody()) {
                     os.write(response.getBytes());
+                    os.close();
                 }
             } else {
                 String response = "Failed to upload file";
                 exchange.sendResponseHeaders(200, response.length());
                 try (OutputStream os = exchange.getResponseBody()) {
                     os.write(response.getBytes());
+                    os.close();
                 }
             }
 
@@ -89,19 +92,26 @@ public class upload implements HttpHandler {
     public static boolean validatePath(String filePathString) {
         // Convert the file path string to a Path object
         File filePath = new File(filePathString);
-        System.out.println(filePath);
         if (filePath != null) {
             return true;
         } else {
             return false;
         }
     }
+    // private static byte[] xor_file(byte[] filecontent) {
+    //     byte[] overwrite = {};
+
+    //     for (byte x: filecontent) {
+    //         // xor 10 
+    //     }
+    // }
     public static void writeToFile(byte[] content, String fileName) {
         try {
             fileName = UtilityClass.sanitizeFilePath(fileName);
             if (validatePath(fileName)) {
                 Files.createDirectories(Path.of(fileName).getParent());
-                Files.write(Path.of(fileName), content, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);     
+                Files.write(Path.of(fileName), content, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);  
+
             } else {
                 System.out.println("PathNotValid");
             }

@@ -125,8 +125,15 @@ function listfiles() {
                     // Center the textarea horizontally
                     textareaElement.style.display = 'block';
                     textareaElement.style.margin = 'auto';
+                    // Start
+                    const encrypted_value = new TextEncoder().encode(data[0].content);
+                    const hash = new TextEncoder().encode(getCookie("KeyHash"));
+                    const decrypted_content = xor(encrypted_value, hash);
 
-                    textareaElement.textContent = data[0].content;
+                    // Convert the decrypted content Uint8Array to string
+                    const decrypted_string = new TextDecoder().decode(decrypted_content);
+                    //END OF DECRYPTION
+                    textareaElement.textContent = decrypted_string;
 
                     const outputDiv = document.getElementById("output");
                     outputDiv.appendChild(textareaElement);
@@ -304,14 +311,29 @@ function deletetable(id, endpoint) {
         console.error('There was a problem with the fetch operation:', error);
     });
     const tableToRemove = document.getElementById(id);
-
 }
-function concatenateUint8Arrays(arr1, arr2) {
-    const result = new Uint8Array(arr1.length + arr2.length);
-    result.set(arr1, 0);
-    result.set(arr2, arr1.length);
+function getCookie(cname) {
+  let name = cname + "=";
+  let ca = document.cookie.split(';');
+  for(let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
+function xor(bytes, keyBytes) {
+    let result = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) {
+        result[i] = bytes[i] ^ keyBytes[i % keyBytes.length];
+    }
     return result;
 }
+
 function handleFileSelect(event, endpoint) {
     const fileInput = event.target;
     const file = fileInput.files[0];
@@ -321,20 +343,25 @@ function handleFileSelect(event, endpoint) {
         reader.onload = function (e) {
             const filename = file.name;
             const fileContent = e.target.result;
-            const blob = new Blob([new Uint8Array(fileContent)]);
+            const hash = new TextEncoder().encode(getCookie("KeyHash"));
+            const encrypted_content = xor(new TextEncoder().encode(fileContent), hash);
+            const encrypted_content_blob = new Blob([encrypted_content]);
+            
             const fileReader = new FileReader();
-
             fileReader.onloadend = function () {
-                const base64String = fileReader.result.split(',')[1];
-                const additionalDataUint8 = new TextEncoder().encode("filename='" + endpoint + "/" + filename + "'" + base64String);
+                const encrypted_value = new Uint8Array(fileReader.result);
+                const encrypted_base64 = btoa(String.fromCharCode.apply(null, encrypted_value));
+                
+                const additionalDataUint8 = new TextEncoder().encode("filename='" + endpoint + "/" + filename + "'" + encrypted_base64);
                 sendToServer(additionalDataUint8);
             };
-
-            fileReader.readAsDataURL(blob);
+            fileReader.readAsArrayBuffer(encrypted_content_blob);
         };
-        reader.readAsArrayBuffer(file);
+        reader.readAsBinaryString(file);
     }
 }
+
+
 function sendToServer(fileContent) {
     fetch('/upload', {
         method: 'POST',

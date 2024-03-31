@@ -32,11 +32,12 @@ public class MyHandler implements HttpHandler {
             exchange.sendResponseHeaders(200, response.length());
             os.write(response.getBytes());
             os.close();
-            exchange.close();
         } else {
             exchange.getResponseHeaders().set("Location", "/");
             exchange.sendResponseHeaders(302, -1);
         }
+        
+        exchange.close();
 
     }
 }

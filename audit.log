@@ -1,0 +1,23 @@
+java.sql.SQLException: SQL Error:
+	at utils.Database.<init>(Database.java:19)
+	at FileServer.Initiate_Server(FileServer.java:92)
+	at FileServer.main(FileServer.java:121)
+Caused by: java.sql.SQLNonTransientConnectionException: Socket fail to connect to host:address=(host=bluepill.site)(port=3306)(type=primary). connect timed out
+	at org.mariadb.jdbc.client.impl.ConnectionHelper.connectSocket(ConnectionHelper.java:136)
+	at org.mariadb.jdbc.client.impl.StandardClient.<init>(StandardClient.java:101)
+	at org.mariadb.jdbc.Driver.connect(Driver.java:69)
+	at org.mariadb.jdbc.Driver.connect(Driver.java:95)
+	at org.mariadb.jdbc.Driver.connect(Driver.java:26)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:677)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:228)
+	at utils.Database.<init>(Database.java:15)
+	... 2 more
+Caused by: java.net.SocketTimeoutException: connect timed out
+	at java.base/java.net.PlainSocketImpl.socketConnect(Native Method)
+	at java.base/java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:412)
+	at java.base/java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:255)
+	at java.base/java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:237)
+	at java.base/java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+	at java.base/java.net.Socket.connect(Socket.java:609)
+	at org.mariadb.jdbc.client.impl.ConnectionHelper.connectSocket(ConnectionHelper.java:130)
+	... 9 more

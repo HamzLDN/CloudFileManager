@@ -1,3 +1,6 @@
+/* This file when fetch the data for the client. USE FOR APIS!!!!! */
+
+
 package utils.EndPointHandlers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -11,19 +14,17 @@ import java.util.stream.Collectors;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import utils.UtilityClass;
-import java.util.Map;
 import java.net.URI;
 import java.util.Arrays;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import java.nio.charset.StandardCharsets;
-import java.util.stream.Stream;
-import org.owasp.encoder.Encode;
 import java.nio.file.DirectoryStream;
 import java.util.stream.StreamSupport;
 import java.util.Base64;
 import java.util.zip.Deflater;
 import java.io.ByteArrayOutputStream;
+import utils.ExpiredSessions.debug;
 public class fetchdata implements HttpHandler {
     private final Database database;
 
@@ -56,18 +57,13 @@ public class fetchdata implements HttpHandler {
     public static String extractFileExtension(String filePath) {
         // Create a Path instance from the file path string
         Path path = Paths.get(filePath);
-
         // Get the file name from the path
         String fileName = path.getFileName().toString();
-
-        // Find the last index of the dot (.) in the file name
         int dotIndex = fileName.lastIndexOf('.');
 
         if (dotIndex != -1 && dotIndex < fileName.length() - 1) {
-            // Extract the file extension (substring after the last dot)
             return fileName.substring(dotIndex + 1).toLowerCase();
         } else {
-            // Return an empty string if no file extension is found
             return "";
         }
     }
@@ -91,6 +87,7 @@ public class fetchdata implements HttpHandler {
         return outputStream.toByteArray();
     }
 
+    // FIX FUNCTION. HIGHLY NESTED AND NOT OPTIMIZED. SHOULD BE REFACTORED INTO SEPARATE METHODS FOR EACH TASK IT PERFORMS
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         URI uri = exchange.getRequestURI();
@@ -126,6 +123,7 @@ public class fetchdata implements HttpHandler {
             String filecontent;
             String ext = extractFileExtension(filepath);
             if (ext.endsWith("png") || ext.endsWith("jpg") || ext.endsWith("jpeg") || ext.endsWith("gif") || ext.endsWith("mov")) {
+                debug.printerrlog(exchange, "Image being sent png/jpg/jpeg/gif");
                 byte[] contentbytes = Files.readAllBytes(Paths.get(filepath));
                 filecontent = encodeToBase64(contentbytes);
             } else {
@@ -134,6 +132,7 @@ public class fetchdata implements HttpHandler {
             byte[] data = send_json("content", filecontent).getBytes();
             exchange.getResponseHeaders().set("Content-Type", "application/json");
             exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*"); // Enable CORS
+            debug.printerrlog(exchange, "CORS ENABLED");
             try (OutputStream os = exchange.getResponseBody()) {
                 exchange.sendResponseHeaders(200, 0);
                 exchange.getResponseHeaders().set("Transfer-Encoding", "chunked");
@@ -144,9 +143,11 @@ public class fetchdata implements HttpHandler {
                     os.write(data, i, length);
                     os.flush();
                 }
+                os.close();
             } catch (IOException e) {
-                System.err.println("An error occurred while trying to write the response: " + e);
+                debug.printlog(exchange,"An error occurred while trying to write the response: " + e);
             }
+            exchange.close();
             return;
         } else {
             exchange.getResponseHeaders().set("Content-Type", "application/json");
@@ -167,7 +168,7 @@ public class fetchdata implements HttpHandler {
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(fileListJson.getBytes());
         }
-
+        exchange.close();
     }
 
     public static String encodeToBase64(byte[] bytes) {

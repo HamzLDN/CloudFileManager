@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import utils.ExpiredSessions.debug;
 public class DeleteExpSessions extends Thread {
     
     private Database db;
@@ -17,7 +18,7 @@ public class DeleteExpSessions extends Thread {
     }
     public static boolean checkexpr(String[] args) {
         String expirationDateString = "2023-12-12 23:05:00";
-        String currentDateString = getCurrentDateInFormat("yyyy-MM-dd HH:mm:ss");
+        String currentDateString = debug.getCurrentDateInFormat("yyyy-MM-dd HH:mm:ss");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime expirationDate = LocalDateTime.parse(expirationDateString, formatter);
         LocalDateTime currentDate = LocalDateTime.parse(currentDateString, formatter);
@@ -48,13 +49,6 @@ public class DeleteExpSessions extends Thread {
         } catch (Exception e) {
             System.err.println(e);
         }
-    }
-    
-
-    public static String getCurrentDateInFormat(String format) {
-        LocalDateTime currentDate = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
-        return currentDate.format(formatter);
     }
 
     public static void maintainSession(Database db) {

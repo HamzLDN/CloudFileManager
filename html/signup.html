@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="assets/bootstrap/js/signup.js"></script>
+    <script src="/assets/bootstrap/js/signup.js"></script>
     <link rel="stylesheet" type="text/css" href="assets/css/signup.css">
     <title>Signup Page</title>
     <style>
@@ -21,30 +21,28 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-color: red;
         }
     </style>
 </head>
 <body >
     
-
-    <center><form action="signup" method="post">
-
+    <center>
         <h2>Signup</h2>
         <div id="statusContainer"></div>
         <label for="firstName">First Name:</label><br>
-        <input type="text" id="firstName" name="firstname" required>
+        <input type="text" id="firstName"required>
         <br><br>
-
         <label for="lastName">Last Name:</label><br>
-        <input type="text" id="lastName" name="lastname" required>
+        <input type="text" id="lastName"required>
         <br><br>
         <label for="username">Username:</label><br>
-        <input type="text" id="username" name="username" required>
+        <input type="text" id="username"required>
         <br><br>
         <label for="password">Password:</label><br>
-        <input type="password" id="password" name="password" required>
+        <input type="password" id="password"required>
         <br><br>
-        <button type="submit">Signup</button>
-    </form></center>
+        <button onClick="SignUp()">SignUp</button>
+    </center>
 </body>
 </html>

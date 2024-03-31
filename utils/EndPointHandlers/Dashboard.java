@@ -4,8 +4,6 @@ import utils.UtilityClass;
 import java.util.List;
 import org.owasp.encoder.Encode;
 import java.io.OutputStream;
-import java.sql.SQLException;
-import java.sql.ResultSet;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
@@ -15,8 +13,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.nio.charset.StandardCharsets;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 public class Dashboard implements HttpHandler {
 private final Database database;
 
@@ -93,6 +89,8 @@ public Dashboard(Database database) {
         exchange.sendResponseHeaders(200, responseBytes.length);
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(responseBytes);
+            os.close();
         }
+        exchange.close();
     }
 }

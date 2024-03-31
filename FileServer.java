@@ -3,6 +3,8 @@ import com.sun.net.httpserver.HttpServer;
 import utils.Database;
 import utils.UtilityClass;
 import utils.ExpiredSessions.DeleteExpSessions;
+import utils.ExpiredSessions.debug;
+
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.BufferedReader;
@@ -17,13 +19,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import utils.EndPointHandlers.*;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
 public class FileServer {
     private static String[] MARIADB() {
         try {
@@ -46,8 +51,8 @@ public class FileServer {
         }
         return null;
     }
-    public static void Initiate_Server(int portnumber) throws IOException{
-        Database databaseManager = null;
+
+    private static void setup_endpoints(Database databaseManager, int portnumber) throws IOException {
         String[] serverendpoints = {
             "/", 
             "/login", 
@@ -60,28 +65,32 @@ public class FileServer {
             "/senddata", 
             "/logout"
         };
+        HttpServer server = HttpServer.create(new InetSocketAddress(portnumber), 1);
+        DeleteExpSessions sessionCleanup = new DeleteExpSessions(databaseManager);
+        sessionCleanup.start();
+        server.createContext("/", new MyHandler(databaseManager, serverendpoints));
+        server.createContext("/login", new Login(databaseManager));
+        server.createContext("/signup", new SignUp(databaseManager));
+        server.createContext("/dashboard", new Dashboard(databaseManager));
+        server.createContext("/assets", new ResourceHandler());
+        server.createContext("/filemanager", new filemanager(databaseManager));
+        server.createContext("/fetchdata", new fetchdata(databaseManager));
+        server.createContext("/upload", new upload(databaseManager));
+        server.createContext("/recvdata", new recvdata(databaseManager));
+        server.createContext("/deletecontent", new DeleteContent(databaseManager));
+        server.createContext("/logout", new Logout(databaseManager));
+        CompletableFuture.runAsync(() -> {
+            server.setExecutor(null);
+            server.start();
+        });
+    }
+    public static void Initiate_Server(int portnumber) throws IOException{
+        Database databaseManager = null;
+        String[] values = MARIADB();
+        
         try {
-            String[] values = MARIADB();
             databaseManager = new Database(values);
-            HttpServer server = HttpServer.create(new InetSocketAddress(portnumber), 1);
-            DeleteExpSessions sessionCleanup = new DeleteExpSessions(databaseManager);
-            sessionCleanup.start();
-
-            server.createContext("/", new MyHandler(databaseManager, serverendpoints));
-            server.createContext("/login", new Login(databaseManager));
-            server.createContext("/signup", new SignUp(databaseManager));
-            server.createContext("/dashboard", new Dashboard(databaseManager));
-            server.createContext("/assets", new ResourceHandler());
-            server.createContext("/filemanager", new filemanager(databaseManager));
-            server.createContext("/fetchdata", new fetchdata(databaseManager));
-            server.createContext("/upload", new upload(databaseManager));
-            server.createContext("/recvdata", new recvdata(databaseManager));
-            server.createContext("/deletecontent", new DeleteContent(databaseManager));
-            server.createContext("/logout", new Logout(databaseManager));
-            CompletableFuture.runAsync(() -> {
-                server.setExecutor(null);
-                server.start();
-            });
+            setup_endpoints(databaseManager, portnumber);
             System.out.println("Server started on port " + portnumber + ". Press Ctrl+C to stop.");
             CompletableFuture.runAsync(() -> {
                 try {
@@ -112,29 +121,35 @@ public class FileServer {
         Initiate_Server(portnumber);
     }
 
+// Server RPS = 20 per second
+
 static class ResourceHandler implements HttpHandler {
+    // <IP,NUM_OF_REQUEST,TIMESTAMP>
+    // Map<Integer, List<Object>> connections = new HashMap<>();
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         OutputStream os = exchange.getResponseBody();
         try {
-        String path = exchange.getRequestURI().getPath();
-        String filename = "." + path;
-        byte[] responseBytes = Files.readAllBytes(Paths.get(filename));
-        System.out.println("LOADED -> " + filename);
-        exchange.getResponseHeaders().set("Content-Type", getContentType(filename));
-        exchange.sendResponseHeaders(200, responseBytes.length);
-        
-        os.write(responseBytes);
-        } catch (IOException e) {
-            System.err.println(e);
-
-        }
+            // connections.put(1, new ArrayList<>(Arrays.asList(strip_ip(exchange.getRemoteAddress()),  System.nanoTime())));
+            
+            // wafsecurity.scan_ips();
+            String path = exchange.getRequestURI().getPath();
+            String filename = "." + path;
+            byte[] responseBytes = Files.readAllBytes(Paths.get(filename));
+            debug.printlog(exchange, "[+] Loading content : " + filename);
+            exchange.getResponseHeaders().set("Content-Type", getContentType(filename));
+            exchange.sendResponseHeaders(200, responseBytes.length);
+            os.write(responseBytes);
+        } catch (IOException e) { System.err.println(e);}
         os.close();
         exchange.close();
 
     }
-
-    
+    private String strip_ip(InetSocketAddress ip) {
+        String value = ip.toString();
+        String[] address = value.split(":");
+        return address[0];
+    }
     private String getContentType(String filename) {
         if (filename.endsWith(".css")) {
             return "text/css";
@@ -151,14 +166,23 @@ static class ResourceHandler implements HttpHandler {
         public SignUp(Database database) {
             this.database = database;
         }
-
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("POST".equals(exchange.getRequestMethod())) {
+                handlepost(exchange, database);
+                debug.printlog(exchange, "Sign Up fetched a POST request.");
+            } else if ("GET".equals(exchange.getRequestMethod())){
+                servesignup(exchange, database);
+                debug.printlog(exchange, "Sign Up fetched a GET reques.");
+            }
+            exchange.close();
+        }
         private void servesignup(HttpExchange exchange, Database database) throws IOException {
             OutputStream os = exchange.getResponseBody();
             String response = UtilityClass.readFile("html/signup.html");
             exchange.sendResponseHeaders(200, response.length());
             os.write(response.getBytes());
             os.close();
-            exchange.close();
         }
 
         private boolean checkUser(Database database, String user) {
@@ -201,46 +225,36 @@ static class ResourceHandler implements HttpHandler {
             String username = parameters.get("username");
             String password = UtilityClass.hashPassword(parameters.get("password"));
             if (!UtilityClass.IsValid(username)) {
-                sendErrorRedirect(exchange, "/signup?status=InvalidCharacters");
+                redirect(exchange, "InvalidCharacters",200);
             } else if (checkUser(database, username)) {
-                sendErrorRedirect(exchange, "/signup?status=taken");
+                redirect(exchange, "taken",200);
             } else {
-                String sql = "INSERT INTO users (firstname, lastname, username, password) VALUES (?,?,?,?)";
-                exchange.getResponseHeaders().add("Content-Type", "text/html");
-
                 try {
-                    if (!create_directory(username)) {
-                        sendErrorRedirect(exchange, "/signup?status=serverError");
-                    } else {
-                        database.executeUpdate(sql, firstname, lastname, username, password);
-                        sendSuccessRedirect(exchange, "/signup?status=success");
-                    }
+                    update_user(exchange, firstname, lastname, username, password);
                 } catch (SQLException e) {
-                    sendErrorRedirect(exchange, "/signup?status=serverError");
+                    redirect(exchange, "serverError", 200);
                 } finally {
                     exchange.getResponseBody().close();
                 }
-
             }
         }
-            private static void sendErrorRedirect(HttpExchange exchange, String location) throws IOException {
-                exchange.getResponseHeaders().add("Location", location);
-                exchange.sendResponseHeaders(302, 0);
-                exchange.getResponseBody().close();
-            }
+        private void update_user(HttpExchange exchange, String firstname, String lastname, String username, String password) throws SQLException, IOException {
+            String sql = "INSERT INTO users (firstname, lastname, username, password) VALUES (?,?,?,?)";
+            exchange.getResponseHeaders().add("Content-Type", "text/html");
+            if (!create_directory(username)) {
+                System.out.println("[-] Failed to make user directory for : " + username);
 
-            private static void sendSuccessRedirect(HttpExchange exchange, String location) throws IOException {
-                exchange.getResponseHeaders().add("Location", location);
-                exchange.sendResponseHeaders(302, 0);
-                exchange.getResponseBody().close();
+            } else {
+                database.executeUpdate(sql, firstname, lastname, username, password);
+                redirect(exchange, "success", 200);
+                System.out.println("[+] Successfully created a user directory for : " + username);
             }
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            if ("POST".equals(exchange.getRequestMethod())) {
-                handlepost(exchange, database);
-            } else if ("GET".equals(exchange.getRequestMethod())){
-                servesignup(exchange, database);
-            }
+        }
+        private static void redirect(HttpExchange exchange, String response, int status) throws IOException {
+            OutputStream os = exchange.getResponseBody();
+            exchange.sendResponseHeaders(200, response.length());
+            os.write(response.getBytes());
+            os.close();
         }
     }
 }

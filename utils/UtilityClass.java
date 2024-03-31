@@ -1,5 +1,8 @@
 package utils;
 import com.sun.net.httpserver.HttpExchange;
+
+import utils.ExpiredSessions.debug;
+
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.net.URLDecoder;
@@ -75,25 +78,31 @@ public class UtilityClass {
                 String value = URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8);
                 parameters.put(key, value);
             }
+            
         }
         return parameters;
     }
     
     public static String getSessionIDCookieValue(HttpExchange exchange, String cookiename) {
-        List<String> cookieHeaders = exchange.getRequestHeaders().get("Cookie");
-        if (cookieHeaders != null) {
-            for (String cookieHeader : cookieHeaders) {
-                List<HttpCookie> cookies = HttpCookie.parse(cookieHeader);
-                for (HttpCookie cookie : cookies) {
-                    if (cookiename.equals(cookie.getName())) {
-                        return cookie.getValue();
+        List<String> cookies = exchange.getRequestHeaders().get("Cookie");
+        // Check if cookies exist
+        if (cookies != null) {
+            for (String cookie : cookies) {
+                String[] cookieValues = cookie.split(";");
+                for (String cookieValue : cookieValues) {
+                    String[] keyValue = cookieValue.split("=");
+                    if (keyValue.length == 2) {
+                        String key = keyValue[0].trim();
+                        String value = keyValue[1].trim();
+                        if (key.equals(cookiename)) {
+                            return value;
+                        }
                     }
                 }
             }
         }
         return "";
     }
-
     public static boolean IsValid(String fileName) {
         String regex = "^[a-zA-Z0-9_-]+(?:\\.[a-zA-Z0-9_-]+)?$";
         Pattern pattern = Pattern.compile(regex);
@@ -101,20 +110,17 @@ public class UtilityClass {
         return matcher.matches();
     }
 
-    // Send http reponse
-    // public void send_response(String request, int status_code, javax.xml.ws.spi.http.HttpExchange exchange) {
-
-    //     exchange.getResponseHeaders().set("Location", "/")
-    // }
-    // HandleUser compares both local sessionID and the useragent to see if its the corresponding device
     private static boolean HandleUser(HttpExchange exchange, String sessionID, String sessionIDFromSessions, String DBuserAgent, String DeviceUserAgent) throws IOException {
         if (sessionID.equals("")&&sessionIDFromSessions.equals("")) {
+            debug.printlog(exchange, "[-] User has no local sessions or invalid: " + sessionID + " : " + sessionIDFromSessions);
             exchange.getResponseHeaders().add("Set-Cookie", "SessionID=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
             return false;
         }
         if (sessionID.equals(sessionIDFromSessions) && (DBuserAgent.equals(DeviceUserAgent))) {
+            debug.printlog(exchange, "[+] UserAgent matches the current user. Session is valid.");
             return true;
         } else {
+            debug.printlog(exchange, "[-] The session does not have a matching UserAgent or it's expired. Session is invalid.");
             exchange.getResponseHeaders().add("Set-Cookie", "SessionID=; Path=/");
             exchange.getResponseHeaders().set("Location", "/");
             exchange.sendResponseHeaders(302, -1);
@@ -181,12 +187,14 @@ public class UtilityClass {
 
     public static boolean handlesession(HttpExchange exchange, Database database) {
         try {
-            String sessionID = UtilityClass.getSessionIDCookieValue(exchange, "SessionID");
             String sessionIDFromSessions = "";
+            String DBuserAgent = "";
+            String sessionID = UtilityClass.getSessionIDCookieValue(exchange, "SessionID");
+            debug.printlog(exchange, "Checking Session ID : "+sessionID);
             List<String> userAgentHeaders = exchange.getRequestHeaders().get("User-Agent");
             String DeviceUserAgent = userAgentHeaders.get(0);
-            String DBuserAgent = "";
-            String sql = "select * from sessions where session_id = ?";
+            
+            String sql = "select session_id, user_agent from sessions where session_id = ?";
             ResultSet resultSet = database.executeQuery(sql, sessionID);
             while (resultSet.next()) {
                 sessionIDFromSessions = resultSet.getString("session_id");

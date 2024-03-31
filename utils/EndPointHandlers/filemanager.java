@@ -1,24 +1,18 @@
 package utils.EndPointHandlers;
-import utils.Database;
+import utils.ExpiredSessions.debug;
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.OutputStream;
-import java.io.Console;
 import java.io.IOException;
 import utils.*;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.net.URI;
-import java.sql.ResultSet;
-import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import java.util.Arrays;
 
 public class filemanager implements HttpHandler {
@@ -40,6 +34,7 @@ public class filemanager implements HttpHandler {
             return "";
         }
     }
+
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         Map<String, Object> variables = new HashMap<>();
@@ -50,14 +45,9 @@ public class filemanager implements HttpHandler {
         String[] parts = Arrays.stream(endpoint.split("/"))
                 .filter(s -> !s.isEmpty())
                 .toArray(String[]::new);
-        if (parts.length == 1) {
-            exchange.getResponseHeaders().set("Location", "/dashboard");
-            exchange.sendResponseHeaders(302, -1);
-            exchange.close();
-            return;
-        }
-
+        debug.printlog(exchange, "[+] Attempting to handle session " + endpoint);
         if (!UtilityClass.handlesession(exchange, database)) {
+            debug.printlog(exchange, "[-] Not a valid session. REDIRECTING BACK TO '/'");
             exchange.getResponseHeaders().set("Location", "/");
             exchange.sendResponseHeaders(302, -1);
             exchange.close();
@@ -69,6 +59,12 @@ public class filemanager implements HttpHandler {
             String firstname = userInfo.get(1);
             String lastname = userInfo.get(2);
             String perms = "";
+            if (parts.length == 1) {
+                exchange.getResponseHeaders().set("Location", "/filemanager/"+username);
+                exchange.sendResponseHeaders(302, -1);
+                exchange.close();
+                return;
+            }
             if (parts.length >= 2) {
                 System.out.println("PART1 ->" + parts[1]);
                 if (username.equals(parts[1])) {
@@ -118,6 +114,5 @@ public class filemanager implements HttpHandler {
             os.close();
             exchange.close();
         }
-
         }
     }

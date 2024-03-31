@@ -32,11 +32,13 @@ public class recvdata implements HttpHandler {
             username = parts[1];
             user = UtilityClass.getuserinfo(exchange, database);
         } catch (Exception e) {
+            os.close();
             exchange.close();
             return;
         }
         if (!user.get(0).equals(username)) {
-            return;
+            os.close();
+            exchange.close();
         }
         byte[] content = Files.readAllBytes(Paths.get(filepath));
         exchange.sendResponseHeaders(200, content.length);
