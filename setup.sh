@@ -11,13 +11,13 @@ javac -cp ".${JARS}" utils/*.java
 
 javac -cp ".${JARS}" -Xlint:unchecked FileServer.java
 
-if [ $# -eq 1 ]; then
-  sudo nohup java -cp ".${JARS}" FileServer "$1" > audit.log &
-else
-  sudo nohup java -cp ".${JARS}" FileServer 8000 > audit.log &
-fi
 # if [ $# -eq 1 ]; then
-#   sudo java -cp ".${JARS}" FileServer "$1"
+#  sudo nohup java -cp ".${JARS}" FileServer "$1" > audit.log &
 # else
-#   sudo  java -cp ".${JARS}" FileServer 8000
+#   sudo nohup java -cp ".${JARS}" FileServer 8000 > audit.log &
 # fi
+if [ $# -eq 1 ]; then
+  sudo java -cp ".${JARS}" FileServer "$1"
+else
+  sudo  java -cp ".${JARS}" FileServer 8000
+fi
