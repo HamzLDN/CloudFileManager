@@ -11,7 +11,7 @@ function CheckStatus(callback) {
 
         // Make an AJAX request to the /signup endpoint
         var xhr = new XMLHttpRequest();
-        xhr.open("POST", "http://bluepill.site/signup", true);
+        xhr.open("POST", "/signup", true);
         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         xhr.onreadystatechange = function () {
             if (xhr.readyState === XMLHttpRequest.DONE) {
